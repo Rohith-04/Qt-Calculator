@@ -1,0 +1,66 @@
+name: Build and Release Calculator
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up CMake
+        uses: actions/setup-cmake@v3
+
+      - name: Configure CMake
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Archive binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: Calculator
+          path: build/Calculator
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download binary
+        uses: actions/download-artifact@v3
+        with:
+          name: Calculator
+          path: .
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./Calculator
+          asset_name: Calculator
+          asset_content_type: application/octet-stream
+
