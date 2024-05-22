@@ -18,10 +18,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: '5.15.2'  # Specify the version of Qt you need
+
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
 
       - name: Configure CMake
+        env:
+          CMAKE_PREFIX_PATH: ${{ env.QT_PATH }}
         run: cmake -S . -B build
 
       - name: Build
